@@ -6,22 +6,34 @@ import {
   HStack,
   IconButton,
   Input,
-  Skeleton,
   SkeletonText,
   Text,
 } from "@chakra-ui/react";
 import { FaLocationArrow, FaTimes } from "react-icons/fa";
 
-import { useJsApiLoader } from "@react-google-maps/api";
+import { useJsApiLoader, GoogleMap, Marker } from "@react-google-maps/api";
+import { useState } from "react";
 
 function App() {
+  const [latitude, setLatitude] = useState(0);
+  const [longitude, setLongitude] = useState(0);
+  const [map, setMap] = useState(null);
+
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY,
+    libraries: ["places"],
   });
 
   if (!isLoaded) {
     return <SkeletonText />;
   }
+
+  navigator.geolocation.getCurrentPosition((position) => {
+    const { latitude, longitude } = position.coords;
+    console.log(latitude, longitude);
+    setLatitude(latitude);
+    setLongitude(longitude);
+  });
   return (
     <Flex
       position="relative"
@@ -34,6 +46,17 @@ function App() {
       w="100vw"
     >
       <Box position="absolute" left={0} top={0} h="100%" w="100%"></Box>
+      <GoogleMap
+        mapContainerStyle={{
+          height: "100%",
+          width: "100%",
+        }}
+        zoom={15}
+        center={{ lat: latitude, lng: longitude }}
+        onLoad={(map) => setMap(map)}
+      >
+        <Marker position={{ lat: latitude, lng: longitude }} />
+      </GoogleMap>
 
       <Box
         p={4}
@@ -65,7 +88,7 @@ function App() {
             aria-label="center back"
             icon={<FaLocationArrow />}
             isRound
-            onClick={() => alert(123)}
+            onClick={() => map.panTo({ lat: latitude, lng: longitude })}
           />
         </HStack>
       </Box>
